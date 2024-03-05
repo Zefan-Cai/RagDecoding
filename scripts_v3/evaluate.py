@@ -47,7 +47,8 @@ def compute_f1(a_gold, a_pred):
     return f1
 
 data_0doc_llama2 = []
-with open('/home/caizf/projects/RagDecoding/results/results_v35/musique_llama2chat_20doc.json', 'r') as fp:
+with open('/home/caizf/projects/RagDecoding/results/results_v35/musique_llama2chat_20doc
+          .json', 'r') as fp:
     for line in fp.readlines():
         data_0doc_llama2.append(json.loads(line))
 
