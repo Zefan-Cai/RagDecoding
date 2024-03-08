@@ -48,24 +48,28 @@ def compute_f1(a_gold, a_pred):
     return f1
 
 def special_compute_f1(a_gold, a_pred, length=-1):
-    gold_toks = get_tokens(a_gold)
-    pred_toks = get_tokens(a_pred)
+    # gold_toks = get_tokens(a_gold)
+    # pred_toks = get_tokens(a_pred)
+    gold_toks = a_gold
+    pred_toks = a_pred
     
+    # for index_pred in range(len(pred_toks)):
+    #     for index_gold in range(len(gold_toks)):
+    #         if gold_toks[index_gold] in pred_toks[index_pred]:
+    #             pred_toks[index_pred] = gold_toks[index_gold]
     
-    for index_pred in range(len(pred_toks)):
-        for index_gold in range(len(gold_toks)):
-            if gold_toks[index_gold] in pred_toks[index_pred]:
-                pred_toks[index_pred] = gold_toks[index_gold]
-    
-    if length == -1: pass
-    else:
-        if len(pred_toks) < length: 
-            for id in range(length - len(pred_toks)):
-                pred_toks.append('unk')
-        else:
-            pass
+    # if length == -1: pass
+    # else:
+    #     if len(pred_toks) < length: 
+    #         for id in range(length - len(pred_toks)):
+    #             pred_toks.append('0')
+    #     else:
+    #         pass
     
     output_length = len(pred_toks)
+    
+    # print(f"debug gold_toks {gold_toks}")
+    # print(f"debug pred_toks {pred_toks}")
     
     common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
     num_same = sum(common.values())
@@ -83,19 +87,17 @@ def special_compute_f1(a_gold, a_pred, length=-1):
     # print(f"debug output_length {output_length} ")
     return f1, output_length, gold_toks, pred_toks
 
-data_supportdoc_llama2chat = []
-with open('/home/caizf/projects/RagDecoding/results/results_v3/musique_llama2chat_supportdoc.json', 'r') as fp:
-    for line in fp.readlines():
-        data_supportdoc_llama2chat.append(json.loads(line))
+completion = []
+with open('./encoded_inputs_completion.json', 'r') as fp:
+    completion = json.load(fp)
 
-data_supportdoc_llama2chat = data_supportdoc_llama2chat[0]
+prediction = []
+with open('./encoded_inputs_prediction.json', 'r') as fp:
+    prediction = json.load(fp)
 
-data_supportdoc_llama2chat_rag = []
-with open('/home/caizf/projects/RagDecoding/results/results_v3/RAG_musique_llama2chat_supportdoc.json', 'r') as fp:
-    for line in fp.readlines():
-        data_supportdoc_llama2chat_rag.append(json.loads(line))
-
-data_supportdoc_llama2chat_rag = data_supportdoc_llama2chat_rag[0]
+prediction_rag = []
+with open('./encoded_inputs_prediction_rag.json', 'r') as fp:
+    prediction_rag = json.load(fp)
 
 total_f1_scores = 0
 total_f1_scores_rag = 0
@@ -103,21 +105,29 @@ total_f1_scores_rag = 0
 increase = 0
 decrease = 0
 
-for index in range(len(data_supportdoc_llama2chat_rag)):
+for index in range(len(completion)):
     
-    prompt = data_supportdoc_llama2chat_rag[index]["prompt"]
     
-    completion = data_supportdoc_llama2chat_rag[index]["completion"]
-    prediction = data_supportdoc_llama2chat[index]["prediction"]
-    prediction_rag = data_supportdoc_llama2chat_rag[index]["prediction"]
-    
-    completion = completion.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
-    prediction = prediction.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
-    prediction_rag = prediction_rag.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
+    this_completion = completion[index]
+    this_prediction = prediction[index]
+    this_prediction_rag = prediction_rag[index]
 
     
-    f1_scores_rag, length, gold_toks_rag, pred_toks_rag = special_compute_f1(completion, prediction_rag, length=-1)
-    f1_scores, _, gold_toks, pred_toks = special_compute_f1(completion, prediction, length=length)
+    
+    filtered_completion = [element for element in this_completion if element != 0]
+    # filtered_prediction = [element for element in this_prediction if element != 0]
+    filtered_prediction_rag = [element for element in this_prediction_rag if element != 0]
+    
+    
+    print(f"debug filtered_completion {len(filtered_completion)}")
+    
+    print(f"debug filtered_prediction_rag {len(filtered_prediction_rag)}")
+    f1_scores_rag, length, gold_toks_rag, pred_toks_rag = special_compute_f1(filtered_completion, filtered_prediction_rag, length=-1)
+    
+    filtered_prediction = this_prediction[:length]
+    
+    print(f"debug filtered_prediction {len(filtered_prediction)}")
+    f1_scores, _, gold_toks, pred_toks = special_compute_f1(filtered_completion, filtered_prediction, length=length)
     
     if f1_scores < f1_scores_rag:
         increase += 1
@@ -125,10 +135,10 @@ for index in range(len(data_supportdoc_llama2chat_rag)):
     
     if f1_scores > f1_scores_rag:
         decrease += 1
-        print(f"debug\n prompt {prompt}\n completion {completion}\n prediction {prediction}\n f1_scores {f1_scores}\n prediction_rag {prediction_rag}\n  f1_scores_rag {f1_scores_rag} \n")
-        print(f"gold_toks_rag {gold_toks_rag}\n pred_toks_rag {pred_toks_rag}\n")
-        print(f"gold_toks {gold_toks}\n pred_toks {pred_toks}\n")
-        print(f"debug length {length} \n")
+        # print(f"debug\n completion {completion}\n prediction {prediction}\n f1_scores {f1_scores}\n prediction_rag {prediction_rag}\n  f1_scores_rag {f1_scores_rag} \n")
+        # print(f"gold_toks_rag {gold_toks_rag}\n pred_toks_rag {pred_toks_rag}\n")
+        # print(f"gold_toks {gold_toks}\n pred_toks {pred_toks}\n")
+        # print(f"debug length {length} \n")
     
     total_f1_scores += f1_scores
     total_f1_scores_rag += f1_scores_rag
@@ -136,5 +146,5 @@ for index in range(len(data_supportdoc_llama2chat_rag)):
 print(f"\n")
 print(f"increase {increase}")
 print(f"decrease {decrease}")
-print("total_f1_scores: ", total_f1_scores / len(data_supportdoc_llama2chat_rag) * 100, "%")
-print("total_f1_scores_rag: ", total_f1_scores_rag / len(data_supportdoc_llama2chat_rag) * 100, "%")
+print("total_f1_scores: ", total_f1_scores / len(completion) * 100, "%")
+print("total_f1_scores_rag: ", total_f1_scores_rag / len(completion) * 100, "%")
