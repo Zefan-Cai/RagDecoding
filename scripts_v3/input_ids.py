@@ -5,14 +5,22 @@ import torch
 import torch.nn.functional as F
 
 data_supportdoc_llama2chat = []
+<<<<<<< HEAD
 with open('/mnt/users/v-caizefan/RAGDecoding/results/results_v3_full/musique_llama2chat_supportdoc.json', 'r') as fp:
+=======
+with open('/home/caizf/projects/RagDecoding/results/results_v3/musique_llama2chat_supportdoc.json', 'r') as fp:
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     for line in fp.readlines():
         data_supportdoc_llama2chat.append(json.loads(line))
 
 data_supportdoc_llama2chat = data_supportdoc_llama2chat[0]
 
 data_supportdoc_llama2chat_rag = []
+<<<<<<< HEAD
 with open('/mnt/users/v-caizefan/RAGDecoding/results/results_v3_full/RAG_musique_llama2chat_supportdoc.json', 'r') as fp:
+=======
+with open('/home/caizf/projects/RagDecoding/results/results_v3/RAG_musique_llama2chat_supportdoc.json', 'r') as fp:
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     for line in fp.readlines():
         data_supportdoc_llama2chat_rag.append(json.loads(line))
 
@@ -73,6 +81,7 @@ encoded_inputs_prediction = encoded_inputs_prediction["input_ids"].tolist()
 encoded_inputs_prediction_rag = encoded_inputs_prediction_rag["input_ids"].tolist()
 
 # 保存为JSON
+<<<<<<< HEAD
 with open("./musique_full_encoded_inputs_completion.json", "w") as file:
     json.dump(encoded_inputs_completion, file)
     
@@ -82,4 +91,15 @@ with open("./musique_full_encoded_inputs_prediction.json", "w") as file:
     
 # 保存为JSON
 with open("./musique_full_encoded_inputs_prediction_rag.json", "w") as file:
+=======
+with open("./encoded_inputs_completion.json", "w") as file:
+    json.dump(encoded_inputs_completion, file)
+    
+# 保存为JSON
+with open("./encoded_inputs_prediction.json", "w") as file:
+    json.dump(encoded_inputs_prediction, file)
+    
+# 保存为JSON
+with open("./encoded_inputs_prediction_rag.json", "w") as file:
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     json.dump(encoded_inputs_prediction_rag, file)

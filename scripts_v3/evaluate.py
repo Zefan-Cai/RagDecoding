@@ -51,6 +51,7 @@ def special_compute_f1(a_gold, a_pred, length=-1):
     gold_toks = get_tokens(a_gold)
     pred_toks = get_tokens(a_pred)
     
+<<<<<<< HEAD
     for index_pred in range(len(gold_toks)):
         if gold_toks[index_pred][-1] == 's':
             gold_toks[index_pred] = gold_toks[index_pred][:-1]
@@ -63,6 +64,13 @@ def special_compute_f1(a_gold, a_pred, length=-1):
     #     for index_gold in range(len(gold_toks)):
     #         if gold_toks[index_gold] in pred_toks[index_pred]:
     #             pred_toks[index_pred] = gold_toks[index_gold]
+=======
+    
+    for index_pred in range(len(pred_toks)):
+        for index_gold in range(len(gold_toks)):
+            if gold_toks[index_gold] in pred_toks[index_pred]:
+                pred_toks[index_pred] = gold_toks[index_gold]
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     
     if length == -1: pass
     else:
@@ -91,14 +99,22 @@ def special_compute_f1(a_gold, a_pred, length=-1):
     return f1, output_length, gold_toks, pred_toks
 
 data_supportdoc_llama2chat = []
+<<<<<<< HEAD
 with open('/mnt/users/v-caizefan/RAGDecoding/results/results_v3_ans/musique_llama2chat_supportdoc.json', 'r') as fp:
+=======
+with open('/home/caizf/projects/RagDecoding/results/results_v3/musique_llama2chat_supportdoc.json', 'r') as fp:
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     for line in fp.readlines():
         data_supportdoc_llama2chat.append(json.loads(line))
 
 data_supportdoc_llama2chat = data_supportdoc_llama2chat[0]
 
 data_supportdoc_llama2chat_rag = []
+<<<<<<< HEAD
 with open('/mnt/users/v-caizefan/RAGDecoding/results/results_v3_ans/RAG_musique_llama2chat_supportdoc.json', 'r') as fp:
+=======
+with open('/home/caizf/projects/RagDecoding/results/results_v3/RAG_musique_llama2chat_supportdoc.json', 'r') as fp:
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     for line in fp.readlines():
         data_supportdoc_llama2chat_rag.append(json.loads(line))
 
@@ -117,6 +133,13 @@ for index in range(len(data_supportdoc_llama2chat_rag)):
     completion = data_supportdoc_llama2chat_rag[index]["completion"]
     prediction = data_supportdoc_llama2chat[index]["prediction"]
     prediction_rag = data_supportdoc_llama2chat_rag[index]["prediction"]
+<<<<<<< HEAD
+=======
+    
+    completion = completion.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
+    prediction = prediction.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
+    prediction_rag = prediction_rag.replace('s', '').replace('t', '').split(',')[0].split('.')[0]
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
 
     
     f1_scores_rag, length, gold_toks_rag, pred_toks_rag = special_compute_f1(completion, prediction_rag, length=-1)
@@ -125,10 +148,13 @@ for index in range(len(data_supportdoc_llama2chat_rag)):
     if f1_scores < f1_scores_rag:
         increase += 1
         # print(f"debug\n prompt {prompt}\n completion {completion}\n prediction {prediction}\n f1_scores {f1_scores}\n prediction_rag {prediction_rag}\n  f1_scores_rag {f1_scores_rag} \n")
+<<<<<<< HEAD
         # print(f"gold_toks_rag {gold_toks_rag}\n pred_toks_rag {pred_toks_rag}\n")
         # print(f"gold_toks {gold_toks}\n pred_toks {pred_toks}\n")
         # print(f"debug length {length} \n")
     
+=======
+>>>>>>> 42c3cefe6e1cfc7ee2462bae548a463a69720af8
     
     if f1_scores > f1_scores_rag:
         decrease += 1
