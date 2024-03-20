@@ -87,12 +87,10 @@ class Data():
         if setting == "0doc":
             DEFAULT_SYSTEM_PROMPT = """\
             You need to answer a question.
-            Your answer should be less than five words.
             """
         else:
             DEFAULT_SYSTEM_PROMPT = """\
             You are given some documents, and you need to answer a question based on these documents.
-            Your answer should be less than five words.
             """
 
         # prompt_tokens=f"<s>{B_INST} {B_SYS} { DEFAULT_SYSTEM_PROMPT} {E_SYS} {prompt} {E_INST}"

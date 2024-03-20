@@ -7,7 +7,7 @@ import os
 import numpy as np
 import torch.nn.functional as F
 from importlib import import_module
-from transformers import StoppingCriteria
+from transformers import StoppingCriteria, set_seed
 from open_instruct.eval.dispatch_openai_requests import dispatch_openai_chat_requesets, dispatch_openai_prompt_requesets
 
 
@@ -29,7 +29,9 @@ class KeyWordsCriteria(StoppingCriteria):
     
     
 @torch.no_grad()
-def generate_completions(model, tokenizer, prompts, batch_size=1, stop_id_sequences=None, add_special_tokens=True, disable_tqdm=False, **generation_kwargs):
+def generate_completions(model, tokenizer, prompts, batch_size=1, stop_id_sequences=None, add_special_tokens=True, strategy='', seed=42, disable_tqdm=False, **generation_kwargs):
+    set_seed(seed)
+
     generations = []
     if not disable_tqdm:
         progress = tqdm.tqdm(total=len(prompts), desc="Generating Completions")
@@ -47,12 +49,66 @@ def generate_completions(model, tokenizer, prompts, batch_size=1, stop_id_sequen
 
 
         try:
-            batch_outputs = model.generate(
-                input_ids=batch_input_ids,
-                attention_mask=attention_mask,
-                stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
-                **generation_kwargs
-            )
+            if strategy == 'greedy search':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            elif strategy == 'contrastive search':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    penalty_alpha=0.6,
+                    top_k=4,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            elif strategy == 'beam search':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    num_beams=5,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            elif strategy == 'multinomial sampling':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    do_sample=True,
+                    num_beams=1,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            elif strategy == 'beam search multinomial sampling':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    num_beams=5,
+                    do_sample=True,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            elif strategy == 'diverse beam search':
+                batch_outputs = model.generate(
+                    input_ids=batch_input_ids,
+                    num_beams=5,
+                    num_beam_groups=5,
+                    diversity_penalty=1.0,
+                    attention_mask=attention_mask,
+                    stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                    **generation_kwargs
+                )
+            # elif strategy == 'speculative search':
+                # assistant_model = AutoModelForCausalLM.from_pretrained(assistant_checkpoint)
+                # batch_outputs = model.generate(
+                #     input_ids=batch_input_ids,
+                #     assistant_model=assistant_model,
+                #     stopping_criteria=[KeyWordsCriteria(stop_id_sequences)] if stop_id_sequences else None,
+                #     **generation_kwargs
+                # )
         
             # the stopping criteria is applied at batch level, so if other examples are not stopped, the entire batch will continue to generate.
             # so some outputs still have the stop sequence, which we need to remove.
@@ -122,6 +178,8 @@ def generate_completions_RAG(model, tokenizer, prompts_withDoc, prompts_withoutD
     if not disable_tqdm:
         progress = tqdm.tqdm(total=len(prompts_withDoc), desc="Generating Completions")
 
+    dot_token_id = tokenizer.encode(".", add_special_tokens=False)
+
     num_return_sequences = generation_kwargs.get("num_return_sequences", 1)
     for i in range(0, len(prompts_withDoc), batch_size):
         batch_prompts_withDoc = prompts_withDoc[i:i+batch_size]
@@ -133,9 +191,6 @@ def generate_completions_RAG(model, tokenizer, prompts_withDoc, prompts_withoutD
         tokenized_prompts_withoutDoc = tokenizer(batch_prompts_withoutDoc, padding="longest", return_tensors="pt", add_special_tokens=add_special_tokens)
         batch_input_ids_withoutDoc = tokenized_prompts_withoutDoc.input_ids
         attention_mask_withoutDoc = tokenized_prompts_withoutDoc.attention_mask
-
-        # print(f"debug tokenized_prompts_withDoc {tokenized_prompts_withDoc.input_ids[0]}")
-        # print(f"debug tokenized_prompts_withoutDoc {tokenized_prompts_withoutDoc.input_ids[0]}")
 
         if model.device.type == "cuda":
             batch_input_ids_withDoc = batch_input_ids_withDoc.cuda()
@@ -151,12 +206,13 @@ def generate_completions_RAG(model, tokenizer, prompts_withDoc, prompts_withoutD
             next_token_logits_withDoc = output_withDoc[:, -1, :]
             next_token_logits_withoutDoc = output_withoutDoc[:, -1, :]
 
-            # print(f"debug tokenized_prompts_withDoc {batch_input_ids_withDoc[0]}")
-            # print(f"debug tokenized_prompts_withoutDoc {batch_input_ids_withoutDoc[0]}")
+            next_token_withDoc = torch.argmax(next_token_logits_withDoc, dim=-1)
+            # print(f"debug next_token_withDoc {next_token_withDoc.shape}")
+
 
             contrastive_next_token_logits = next_token_logits_withDoc - next_token_logits_withoutDoc
             # print(next_token_logits_doc[:10])
-            # print(next_token_logits[:10])
+            # print(next_token_logits[:10]) 
             # print(contrastive_next_token_logits[:10])
             relative_top_value=-1000.0
 
@@ -176,17 +232,24 @@ def generate_completions_RAG(model, tokenizer, prompts_withDoc, prompts_withoutD
             # Append the new token to the existing sequence
             # print(input_ids.shape)
             # print(next_token.shape)
-            batch_input_ids_withoutDoc = torch.cat([batch_input_ids_withoutDoc, next_token.unsqueeze(-1)], dim=-1)
-            batch_input_ids_withDoc = torch.cat([batch_input_ids_withDoc, next_token.unsqueeze(-1)], dim=-1)
+            # print(f"debug: ")
+
+
+            if next_token_withDoc[0] in tokenizer.all_special_ids or next_token_withDoc[0] == dot_token_id:
+                true_next_token = next_token_withDoc
+            else:
+                true_next_token = next_token
+
+
+
+            batch_input_ids_withoutDoc = torch.cat([batch_input_ids_withoutDoc, true_next_token.unsqueeze(-1)], dim=-1)
+            batch_input_ids_withDoc = torch.cat([batch_input_ids_withDoc, true_next_token.unsqueeze(-1)], dim=-1)
 
             # Check if the last token is an end-of-sequence token
-            # if next_token in tokenizer.all_special_ids:
-            #     break
+            if true_next_token in tokenizer.all_special_ids:
+                break
 
             """
-                    # Check if the last token is an end-of-sequence token
-                    if next_token in tokenizer.all_special_ids:
-                        break
 
                     try:
                         batch_outputs = model.generate(
@@ -212,13 +275,19 @@ def generate_completions_RAG(model, tokenizer, prompts_withDoc, prompts_withoutD
 
             """
 
-            batch_outputs = tokenizer.batch_decode(batch_input_ids_withoutDoc, skip_special_tokens=True)
-            batch_prompts = tokenizer.batch_decode(batch_input_ids_withoutDoc_copy, skip_special_tokens=True)
-            # duplicate the prompts to match the number of return sequences
-            batch_prompts = [prompt for prompt in batch_prompts for _ in range(num_return_sequences)]
-            batch_generations = [
-                output[len(prompt):] for prompt, output in zip(batch_prompts, batch_outputs)
-            ]
+
+
+        batch_outputs = tokenizer.batch_decode(batch_input_ids_withoutDoc, skip_special_tokens=True)
+        batch_prompts = tokenizer.batch_decode(batch_input_ids_withoutDoc_copy, skip_special_tokens=True)
+        
+        # print(f"debug batch_input_ids_withoutDoc {batch_input_ids_withoutDoc}")
+        # print(f"debug batch_outputs {batch_outputs}")
+        
+        # duplicate the prompts to match the number of return sequences
+        batch_prompts = [prompt for prompt in batch_prompts for _ in range(num_return_sequences)]
+        batch_generations = [
+            output[len(prompt):] for prompt, output in zip(batch_prompts, batch_outputs)
+        ]
         # except Exception as e:
         #     print("Error when generating completions for batch:")
         #     print(batch_prompts)

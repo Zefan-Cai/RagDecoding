@@ -1,23 +1,22 @@
 export CUDA_VISIBLE_DEVICES=6
 
 
-
-base_dir=/home/caizf/projects/RagDecoding
+base_dir=/mnt/users/v-caizefan/RAGDecoding
 setting=supportdoc
 
 
 python -m open_instruct.eval.MuSiQue.run_eval_RAG \
-    --data_dir ${base_dir}/data/data_v2 \
+    --data_dir ${base_dir}/data_full/data_v4 \
     --file_withDoc musique_llama2chat_${setting}.json \
     --file_withoutDoc musique_llama2chat_0doc.json \
-    --save_dir ${base_dir}/results/results_v3/ \
-    --model /home/caizf/models/Llama-2-7b-chat-hf/ \
-    --tokenizer /home/caizf/models/Llama-2-7b-chat-hf/ \
-    --max_new_tokens 10 \
+    --save_dir ${base_dir}/results/results_v3_full/ \
+    --model ${base_dir}/models/Llama-2-7b-chat-hf/ \
+    --tokenizer ${base_dir}/models/Llama-2-7b-chat-hf/ \
+    --max_new_tokens 50 \
     --sample_method first \
     --eval_batch_size 1 \
     --load_in_half
 
-
+# --max_num_examples_per_task 10 \
 # --max_num_examples_per_task 128 \
 

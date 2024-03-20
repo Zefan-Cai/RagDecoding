@@ -62,10 +62,25 @@ def manual_infer_with_llama_with_attention(prompt, max_length=50):
 
 
 input = """
-You are given some documents, and you need to answer a question based on these documents. 
-document 11: title: Saudi Arabia text: The area of modern - day Saudi Arabia formerly consisted of four distinct regions: Hejaz, Najd and parts of Eastern Arabia (Al - Ahsa) and Southern Arabia ('Asir). The Kingdom of Saudi Arabia was founded in 1932 by Ibn Saud. He united the four regions into a single state through a series of conquests beginning in 1902 with the capture of Riyadh, the ancestral home of his family, the House of Saud. Saudi Arabia has since been an absolute monarchy, effectively a hereditary dictatorship governed along Islamic lines. The ultraconservative Wahhabi religious movement within Sunni Islam has been called the predominant feature of Saudi culture '', with its global spread largely financed by the oil and gas trade. Saudi Arabia is sometimes called the Land of the Two Holy Mosques'' in reference to Al - Masjid al - Haram (in Mecca) and Al - Masjid an - Nabawi (in Medina), the two holiest places in Islam. As of 2013, the state had a total population of 28.7 million, of which 20 million were Saudi nationals and 8 million were foreigners. As of 2017, the population is 33 million. The state's official language is Arabic. 
-Question: When was the region immediately north of the region where the country that secured southern Lebanon is located and the Persian Gulf established? 
-Answer: 
+[INST] <<SYS>>
+             You are given some documents, and you need to answer a question based on these documents.
+            Your answer should be less than five words.
+              
+<</SYS>>
+
+Document: Roman Republic After having declined in size following the subjugation of the Mediterranean, the Roman navy underwent short-term upgrading and revitalisation in the late Republic to meet several 
+new demands. Under Caesar, an invasion fleet was assembled in the English Channel to allow the invasion of Britannia; under Pompey, a large fleet was raised in the Mediterranean Sea to clear the sea of Cili
+cian pirates. During the civil war that followed, as many as a thousand ships were either constructed or pressed into service from Greek cities. 
+Document: North Sea The North Sea is bounded by the Orkney Islands and east coast of Great Britain to the west and the northern and central European mainland to the east and south, including Norway, Denmark
+, Germany, the Netherlands, Belgium, and France. In the southwest, beyond the Straits of Dover, the North Sea becomes the English Channel connecting to the Atlantic Ocean. In the east, it connects to the Ba
+ltic Sea via the Skagerrak and Kattegat, narrow straits that separate Denmark from Norway and Sweden respectively. In the north it is bordered by the Shetland Islands, and connects with the Norwegian Sea, w
+hich lies in the very north - eastern part of the Atlantic. 
+Document: Rhine The Rhine (Romansh: Rein, German: Rhein, French: le Rhin, Dutch: Rijn) is a European river that begins in the Swiss canton of Graubünden in the southeastern Swiss Alps, forms part of the Swi
+ss-Austrian, Swiss-Liechtenstein border, Swiss-German and then the Franco-German border, then flows through the Rhineland and eventually empties into the North Sea in the Netherlands. The biggest city on th
+e river Rhine is Cologne, Germany with a population of more than 1,050,000 people. It is the second-longest river in Central and Western Europe (after the Danube), at about 1,230 km (760 mi),[note 2][note 1
+] with an average discharge of about 2,900 m3/s (100,000 cu ft/s). 
+Question: Who sent naval ships to the body of water that joins the Atlantic and the sea where the Rhine ends? 
+Answer:  [/INST]
 """
 
 results, input_ids, attention = manual_infer_with_llama_with_attention(input)

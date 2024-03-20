@@ -14,6 +14,7 @@ python -m open_instruct.eval.MuSiQue.run_eval \
     --tokenizer /home/caizf/models/Llama-2-7b-chat-hf/ \
     --sample_method first \
     --max_new_tokens 10 \
+    --max_new_tokens 10 \
     --eval_batch_size 1 \
     --load_in_half
 

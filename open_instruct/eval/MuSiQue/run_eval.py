@@ -28,6 +28,7 @@ def eval_hf_model(args, model, tokenizer, examples, save_path=None):
         model=model,
         tokenizer=tokenizer,
         prompts=prompts,
+        strategy=args.strategy,
         max_new_tokens=args.max_new_tokens,
         top_k=1,
         batch_size=args.eval_batch_size if args.eval_batch_size else 1
@@ -94,7 +95,7 @@ def main(args):
                 model, 
                 tokenizer, 
                 task_examples,
-                save_path=os.path.join(args.save_dir, f"{task_name}.json")
+                save_path=os.path.join(args.save_dir)
             )
 
 
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", type=str, default="data/ace")
     parser.add_argument("--evaluation_file", type=str, default="")
     parser.add_argument("--save_dir", type=str, default="")
+    parser.add_argument("--strategy", type=str, default="")
     parser.add_argument("--model_name_or_path", type=str, default=None, help="if specified, we will load the model to generate the predictions.")
     parser.add_argument("--tokenizer_name_or_path", type=str, default=None, help="if specified, we will load the tokenizer from here.")
     parser.add_argument("--max_num_examples_per_task", type=int, default=None, help="maximum number of examples to evaluate per task.")
